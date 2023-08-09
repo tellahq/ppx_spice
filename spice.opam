@@ -1,0 +1,33 @@
+opam-version: "2.0"
+name: "spice"
+version: "0.1.14"
+synopsis: "Spice ppx Runtime"
+description: """
+Spice ppx Runtime
+"""
+maintainer: "Greenlabs Dev <developer@greenlabs.co.kr>"
+authors: "Greenlabs Dev <developer@greenlabs.co.kr>"
+license: "MIT"
+homepage: "https://github.com/green-labs/ppx_spice"
+bug-reports: "https://github.com/green-labs/ppx_spice/issues"
+dev-repo: "git+https://github.com/green-labs/ppx_spice.git"
+depends: [
+  "ocaml" { >= "4.13.0"}
+  "dune" { >= "3.8"}
+  "melange" {>= "1.0.0"}
+  "rescript-syntax" {>= "1.0.0"}
+]
+build: [
+  ["dune" "subst"] {dev}
+  [
+    "dune"
+    "build"
+    "-p"
+    name
+    "-j"
+    jobs
+    "@install"
+    "@runtest" {with-test}
+    "@doc" {with-doc}
+  ]
+]

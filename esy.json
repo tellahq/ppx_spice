@@ -1,0 +1,18 @@
+{
+  "name": "ppx_spice",
+  "version": "0.1.15",
+  "description": "ReScript PPX which generate JSON (de)serializer",
+  "license": "MIT",
+  "esy": {
+    "build": "dune build -p #{self.name}",
+    "release": {
+      "bin": ["ppx_spice"]
+    }
+  },
+  "dependencies": {
+    "ocaml": ">= 4.12.0",
+    "@opam/dune": ">= 3.0",
+    "@opam/ppxlib": ">= 0.26.0",
+    "@opam/ocamlfind": ">= 1.9.3"
+  }
+}

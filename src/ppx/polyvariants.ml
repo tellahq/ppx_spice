@@ -64,8 +64,8 @@ let generate_encoder_case generator_settings unboxed has_attr_as row =
         pc_guard = None;
         pc_rhs =
           (if unboxed then List.tl rhs_list |> List.hd (* diff *)
-          else if has_attr_as then [%expr Js.Json.string [%e constructor_expr]]
-          else [%expr Js.Json.array [%e rhs_list |> Exp.array]]);
+           else if has_attr_as then [%expr Js.Json.string [%e constructor_expr]]
+           else [%expr Js.Json.array [%e rhs_list |> Exp.array]]);
       }
   (* We don't have enough information to generate a encoder *)
   | Rinherit arg ->
@@ -129,7 +129,7 @@ let generate_decoder_case generator_settings { prf_desc } =
       {
         pc_lhs =
           ( Pconst_string (txt, Location.none, None) |> Pat.constant |> fun v ->
-            Some v |> Pat.construct (lid "Js.Json.JSONString") );
+            Some ([], v) |> Pat.construct (lid "Js.Json.JSONString") );
         pc_guard = None;
         pc_rhs =
           [%expr

@@ -1,0 +1,6 @@
+(library
+ (name spice)
+ (public_name spice)
+ (modes melange)
+ (preprocess
+  (pps melange.ppx)))
