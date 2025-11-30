@@ -116,7 +116,8 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: [build_linux, build_macos, build_windows]
+    # TODO: add build_windows back once the CI is fixed
+    needs: [build_linux, build_macos]
     name: (only on release) Publish
     runs-on: ubuntu-latest
     steps:
@@ -147,12 +148,13 @@ jobs:
           name: macOS-latest
           path: binaries/darwin
 
-      - name: Download windows artifacts
-        if: success()
-        uses: actions/download-artifact@master
-        with:
-          name: windows-latest
-          path: binaries/windows
+      # TODO: uncomment once windows CI is fixed
+      # - name: Download windows artifacts
+      #   if: success()
+      #   uses: actions/download-artifact@master
+      #   with:
+      #     name: windows-latest
+      #     path: binaries/windows
 
       - name: Move artifacts
         if: success()
@@ -161,10 +163,11 @@ jobs:
           mv binaries/linux/ppx.exe ppx-linux.exe
           mv binaries/linux-arm64/ppx.exe ppx-linux-arm64.exe
           mv binaries/darwin/ppx.exe ppx-osx.exe
-          mv binaries/windows/ppx.exe ppx-windows.exe
+          # TODO: uncomment once windows CI is fixed
+          # mv binaries/windows/ppx.exe ppx-windows.exe
 
       - name: Publish
         if: success()
-        run: npm publish
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
