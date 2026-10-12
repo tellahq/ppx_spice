@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## Unreleased
+## 0.8.0
 
 - `@spice.serde({legacyWrite: true})`: decoders read the serde and the default spice encoding, encoders write the default spice encoding, so stored JSON can move to serde once every reader understands it.
 
