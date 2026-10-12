@@ -43,6 +43,21 @@ let name_of_alias ~loc ~has_attr_as ~alias constructor =
     | Pexp_constant (Pconst_string (s, _, _)) -> s
     | _ -> fail loc "@spice.serde needs @spice.as to be a string"
 
+(* A constructor's JSON name: its [@spice.as], else ReScript's [@as], which
+   also renames it in memory, else the constructor. *)
+let name_of_attributes ~loc ~has_attr_as ~alias attributes constructor =
+  let spice_name = name_of_alias ~loc ~has_attr_as ~alias constructor in
+  match get_attribute_by_name attributes "as" with
+  | Error s -> fail loc s
+  | Ok None -> spice_name
+  | Ok (Some attribute) -> (
+      match get_expression_from_payload attribute with
+      | { pexp_desc = Pexp_constant (Pconst_string (s, _, _)) } ->
+          if has_attr_as && s <> spice_name then
+            fail loc "@as and @spice.as name the constructor differently"
+          else s
+      | _ -> fail loc "@spice.serde needs @as to be a string")
+
 let json_object entries =
   Exp.constraint_
     [%expr JSON.Object (Dict.fromArray [%e Exp.array entries])]

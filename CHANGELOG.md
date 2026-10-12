@@ -3,6 +3,7 @@
 ## 0.7.0
 
 - Breaking: `@spice.serde` decoders read only the serde form. Add `@spice.serde({legacy: true})` to keep reading the default spice encoding (`["Variant", ...]`) and, with `@tag`, bare strings for constructors without payload.
+- `@spice.serde`: ReScript's `@as("...")` on a variant constructor also sets its JSON name, so the in-memory and JSON names match.
 
 ## 0.6.0
 

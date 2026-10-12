@@ -135,7 +135,7 @@ Like serde, a single value that doesn't encode to an object (`Dot(5)` for `Dot(i
 
 For constructors with an inline record this is also the variant's runtime representation in ReScript.
 
-`@spice.as("...")` renames a constructor in JSON, like `#[serde(rename = "...")]`, and may be used on any constructor. Polymorphic variants are always externally tagged.
+`@spice.as("...")` renames a constructor in JSON, like `#[serde(rename = "...")]`, and may be used on any constructor. ReScript's own `@as("...")` also renames a variant constructor in JSON, and in memory too, so a payload constructor is the same object in memory and in JSON (`@as("full") Full({x: int})` is `{"type": "full", "x": 1}` both ways). It must be a string, and may be combined with `@spice.as` only if both give the same name. ReScript doesn't support `@as` on polymorphic variants, so they use `@spice.as`. Polymorphic variants are always externally tagged.
 
 Two constructors can't share a JSON name, and with `@tag` no payload field may be keyed like the tag; both are compile errors.
 
