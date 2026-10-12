@@ -48,9 +48,11 @@ let get_expression_from_payload { attr_name = { loc }; attr_payload = payload }
    {"C": [x, y]} and [D({x})] is {"D": {"x": ...}}. With ReScript's
    [@tag("type")] on the type, internally tagged like
    [#[serde(tag = "type")]]: [A] is {"type": "A"} and [D({x})] is
-   {"type": "D", "x": ...}. Decoders also accept the default spice encoding,
-   so values stored before switching a type to serde keep decoding. *)
-type serde = { tag : string option }
+   {"type": "D", "x": ...}. Decoders read only that form, unless
+   [@spice.serde({legacy: true})] lets them also read the default spice
+   encoding, so values stored before switching a type to serde keep
+   decoding. *)
+type serde = { tag : string option; legacy : bool }
 
 type generator_settings = {
   do_encode : bool;
@@ -66,15 +68,31 @@ let get_string_payload ({ attr_name = { loc } } as attribute) =
   | { pexp_desc = Pexp_constant (Pconst_string (s, _, _)) } -> s
   | _ -> fail loc "Expected a string as attribute payload"
 
+(* [@spice.serde] or [@spice.serde({legacy: bool})]. *)
+let get_serde_legacy ({ attr_name = { loc }; attr_payload } as attribute) =
+  let invalid () = fail loc "@spice.serde takes no payload or {legacy: bool}" in
+  match attr_payload with
+  | PStr [] -> false
+  | _ -> (
+      match get_expression_from_payload attribute with
+      | { pexp_desc = Pexp_record ([ ({ txt = Lident "legacy" }, value) ], None) }
+        -> (
+          match value.pexp_desc with
+          | Pexp_construct ({ txt = Lident "true" }, None) -> true
+          | Pexp_construct ({ txt = Lident "false" }, None) -> false
+          | _ -> invalid ())
+      | _ -> invalid ())
+
 let get_serde_from_attributes attributes =
   match get_attribute_by_name attributes (annotation_name ^ ".serde") with
   | Ok None -> Ok None
   | Error _ as e -> e
-  | Ok (Some _) -> (
+  | Ok (Some serde) -> (
+      let legacy = get_serde_legacy serde in
       match get_attribute_by_name attributes "tag" with
-      | Ok None -> Ok (Some { tag = None })
+      | Ok None -> Ok (Some { tag = None; legacy })
       | Ok (Some attribute) ->
-          Ok (Some { tag = Some (get_string_payload attribute) })
+          Ok (Some { tag = Some (get_string_payload attribute); legacy })
       | Error _ as e -> e)
 
 let get_generator_settings_from_attributes attributes =

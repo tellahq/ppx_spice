@@ -43,6 +43,21 @@ let name_of_alias ~loc ~has_attr_as ~alias constructor =
     | Pexp_constant (Pconst_string (s, _, _)) -> s
     | _ -> fail loc "@spice.serde needs @spice.as to be a string"
 
+(* A constructor's JSON name: its [@spice.as], else ReScript's [@as], which
+   also renames it in memory, else the constructor. *)
+let name_of_attributes ~loc ~has_attr_as ~alias attributes constructor =
+  let spice_name = name_of_alias ~loc ~has_attr_as ~alias constructor in
+  match get_attribute_by_name attributes "as" with
+  | Error s -> fail loc s
+  | Ok None -> spice_name
+  | Ok (Some attribute) -> (
+      match get_expression_from_payload attribute with
+      | { pexp_desc = Pexp_constant (Pconst_string (s, _, _)) } ->
+          if has_attr_as && s <> spice_name then
+            fail loc "@as and @spice.as name the constructor differently"
+          else s
+      | _ -> fail loc "@spice.serde needs @as to be a string")
+
 let json_object entries =
   Exp.constraint_
     [%expr JSON.Object (Dict.fromArray [%e Exp.array entries])]
@@ -201,6 +216,9 @@ let rec decode_by_name cases ~otherwise =
 (* [legacy] decodes the default spice encoding, an array with the
    constructor first, given [json_arr]. *)
 let generate_decoder generator_settings ~tag ~legacy cases =
+  (* serde writes a unit constructor as a bare string only when externally
+     tagged; an internally tagged one reads it only as a legacy value. *)
+  let string_decodes = Option.is_none tag || Option.is_some legacy in
   let invalid = [%expr Spice.error "Invalid variant constructor" v] in
   let units =
     cases
@@ -269,17 +287,41 @@ let generate_decoder generator_settings ~tag ~legacy cases =
               [%e decode_by_name (units @ records) ~otherwise:invalid]
           | _ -> Spice.error ([%e str tag] ^ " missing") v]
   in
-  expr_func ~arity:1
-    [%expr
-      fun v ->
-        match (v : JSON.t) with
+  let cases =
+    [ [%expr
         (* First: JSON.Object alone would also match null here. *)
-        | JSON.Null -> Spice.error "Not a variant" v
-        | JSON.String spice_tag -> [%e decode_by_name units ~otherwise:invalid]
-        | JSON.Object dict -> [%e object_decoder]
-        | JSON.Array [||] -> Spice.error "Expected variant, found empty array" v
-        | JSON.Array json_arr -> [%e legacy]
-        | _ -> Spice.error "Not a variant" v]
+        function JSON.Null -> Spice.error "Not a variant" v] ]
+    @ (if string_decodes then
+         [ [%expr
+             function
+             | JSON.String spice_tag ->
+                 [%e decode_by_name units ~otherwise:invalid]] ]
+       else [])
+    (* Before JSON.Object, which also matches arrays at runtime. *)
+    @ (match legacy with
+      | Some legacy ->
+          [ [%expr
+              function
+              | JSON.Array [||] ->
+                  Spice.error "Expected variant, found empty array" v];
+            [%expr function JSON.Array json_arr -> [%e legacy]] ]
+      | None -> [
+            [%expr
+              function
+              | JSON.Array _ -> Spice.error "Expected variant, found array" v];
+          ])
+    @ [ [%expr function JSON.Object dict -> [%e object_decoder]] ]
+    @ [ [%expr function _ -> Spice.error "Not a variant" v] ]
+  in
+  let cases =
+    List.concat_map
+      (function
+        | { pexp_desc = Pexp_function cases } -> cases
+        | { pexp_loc } -> fail pexp_loc "expected a function")
+      cases
+  in
+  expr_func ~arity:1
+    [%expr fun v -> [%e Exp.match_ [%expr (v : JSON.t)] cases]]
 
 let generate_codecs ({ do_encode; do_decode } as generator_settings) ~tag
     ~legacy cases =
@@ -287,5 +329,11 @@ let generate_codecs ({ do_encode; do_decode } as generator_settings) ~tag
   ( (if do_encode then Some (generate_encoder generator_settings ~tag cases)
      else None),
     if do_decode then
-      Some (generate_decoder generator_settings ~tag ~legacy:(legacy ()) cases)
+      Some
+        (generate_decoder generator_settings ~tag
+           ~legacy:
+             (match generator_settings.serde with
+             | Some { legacy = true } -> Some (legacy ())
+             | _ -> None)
+           cases)
     else None )

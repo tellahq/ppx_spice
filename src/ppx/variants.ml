@@ -282,7 +282,13 @@ let validate_spice_as_payload unboxed parsed_decls =
                   single-payload variants"
            | _ -> ())
 
-let serde_case { name; alias; has_attr_as; constr_decl = { pcd_args; pcd_loc } }
+let serde_case
+    {
+      name;
+      alias;
+      has_attr_as;
+      constr_decl = { pcd_args; pcd_loc; pcd_attributes };
+    }
     : Serde.case =
   let construct args = Exp.construct (lid name) args in
   let payload, lhs =
@@ -296,7 +302,9 @@ let serde_case { name; alias; has_attr_as; constr_decl = { pcd_args; pcd_loc } }
             (Some (generate_inline_record_payload_pattern fields)) )
   in
   {
-    name = Serde.name_of_alias ~loc:pcd_loc ~has_attr_as ~alias name;
+    name =
+      Serde.name_of_attributes ~loc:pcd_loc ~has_attr_as ~alias pcd_attributes
+        name;
     constructor = name;
     loc = pcd_loc;
     payload;
