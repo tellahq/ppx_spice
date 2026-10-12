@@ -51,8 +51,10 @@ let get_expression_from_payload { attr_name = { loc }; attr_payload = payload }
    {"type": "D", "x": ...}. Decoders read only that form, unless
    [@spice.serde({legacy: true})] lets them also read the default spice
    encoding, so values stored before switching a type to serde keep
-   decoding. *)
-type serde = { tag : string option; legacy : bool }
+   decoding. [@spice.serde({legacyWrite: true})] also reads both forms but
+   encodes the default spice encoding, so a type can learn to read the serde
+   form everywhere before anything writes it. *)
+type serde = { tag : string option; legacy : bool; legacy_write : bool }
 
 type generator_settings = {
   do_encode : bool;
@@ -68,19 +70,32 @@ let get_string_payload ({ attr_name = { loc } } as attribute) =
   | { pexp_desc = Pexp_constant (Pconst_string (s, _, _)) } -> s
   | _ -> fail loc "Expected a string as attribute payload"
 
-(* [@spice.serde] or [@spice.serde({legacy: bool})]. *)
+(* [@spice.serde], [@spice.serde({legacy: bool})] or
+   [@spice.serde({legacyWrite: bool})]: whether decoders read the legacy
+   form, and whether encoders write it. Writing it implies reading it. *)
 let get_serde_legacy ({ attr_name = { loc }; attr_payload } as attribute) =
-  let invalid () = fail loc "@spice.serde takes no payload or {legacy: bool}" in
+  let invalid () =
+    fail loc "@spice.serde takes no payload, {legacy: bool} or {legacyWrite: bool}"
+  in
+  let bool value =
+    match value.pexp_desc with
+    | Pexp_construct ({ txt = Lident "true" }, None) -> true
+    | Pexp_construct ({ txt = Lident "false" }, None) -> false
+    | _ -> invalid ()
+  in
   match attr_payload with
-  | PStr [] -> false
+  | PStr [] -> (false, false)
   | _ -> (
       match get_expression_from_payload attribute with
       | { pexp_desc = Pexp_record ([ ({ txt = Lident "legacy" }, value) ], None) }
-        -> (
-          match value.pexp_desc with
-          | Pexp_construct ({ txt = Lident "true" }, None) -> true
-          | Pexp_construct ({ txt = Lident "false" }, None) -> false
-          | _ -> invalid ())
+        ->
+          (bool value, false)
+      | {
+       pexp_desc =
+         Pexp_record ([ ({ txt = Lident "legacyWrite" }, value) ], None);
+      } ->
+          let write = bool value in
+          (write, write)
       | _ -> invalid ())
 
 let get_serde_from_attributes attributes =
@@ -88,11 +103,13 @@ let get_serde_from_attributes attributes =
   | Ok None -> Ok None
   | Error _ as e -> e
   | Ok (Some serde) -> (
-      let legacy = get_serde_legacy serde in
+      let legacy, legacy_write = get_serde_legacy serde in
       match get_attribute_by_name attributes "tag" with
-      | Ok None -> Ok (Some { tag = None; legacy })
+      | Ok None -> Ok (Some { tag = None; legacy; legacy_write })
       | Ok (Some attribute) ->
-          Ok (Some { tag = Some (get_string_payload attribute); legacy })
+          Ok
+            (Some
+               { tag = Some (get_string_payload attribute); legacy; legacy_write })
       | Error _ as e -> e)
 
 let get_generator_settings_from_attributes attributes =

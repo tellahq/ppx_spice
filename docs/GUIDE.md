@@ -148,6 +148,8 @@ Decoders read only the serde form. `@spice.serde({legacy: true})` also lets them
 type shape = Circle | Polygon({sides: int})
 ```
 
+`@spice.serde({legacyWrite: true})` reads both forms too, but encoders write the default spice encoding, an array led by the constructor's name (`["Polygon", {"sides": 5}]`, also for a renamed constructor). That lets every reader of stored JSON learn the serde form before anything writes it: switch to `{legacy: true}` once they all have.
+
 ### Option and Null
 
 In records, `option<T>` fields and optional fields encode `None` by omitting the object key. A missing key decodes to `None`. A present JSON `null` is decoded by `T`; for example, `option<string>` fails on `null` because `string` cannot decode `null`. Use `Null.t<T>` when a present JSON `null` is a valid value.

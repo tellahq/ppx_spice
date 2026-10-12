@@ -248,6 +248,22 @@ let generate_legacy_decoder generator_settings row_fields =
   |> fun cases ->
   cases @ [ default_case ] |> Exp.match_ [%expr Array.getUnsafe json_arr 0]
 
+let generate_encoder generator_settings unboxed has_attr_as parsed_fields =
+  List.map (generate_encoder_case generator_settings unboxed has_attr_as)
+    parsed_fields
+  |> Exp.match_ [%expr v]
+  |> Exp.fun_ Asttypes.Nolabel None [%pat? v]
+  |> Utils.expr_func ~arity:1
+
+(* A constructor as the default spice encoding writes it: an array led by
+   the constructor's own name, which the legacy decoder reads back. *)
+let legacy_field field =
+  {
+    field with
+    alias = Exp.constant (Pconst_string (field.name, Location.none, Some "*j"));
+    has_attr_as = false;
+  }
+
 let generate_codecs ({ do_encode; do_decode } as generator_settings) row_fields
     unboxed =
   let parsed_fields = List.map parse_decl row_fields in
@@ -255,13 +271,24 @@ let generate_codecs ({ do_encode; do_decode } as generator_settings) row_fields
   | Some { tag = Some _ } ->
       fail (List.hd row_fields).prf_loc
         "@tag doesn't apply to polymorphic variants"
-  | Some { tag = None } ->
+  | Some { tag = None; legacy_write } ->
       if unboxed then
         fail (List.hd row_fields).prf_loc
           "@spice.serde can't be combined with @unboxed";
-      Serde.generate_codecs generator_settings ~tag:None
-        ~legacy:(fun () -> generate_legacy_decoder generator_settings row_fields)
-        (List.map serde_case parsed_fields)
+      let encoder, decoder =
+        Serde.generate_codecs generator_settings ~tag:None
+          ~legacy:(fun () ->
+            generate_legacy_decoder generator_settings row_fields)
+          (List.map serde_case parsed_fields)
+      in
+      let encoder =
+        if legacy_write && do_encode then
+          Some
+            (generate_encoder generator_settings false false
+               (List.map legacy_field parsed_fields))
+        else encoder
+      in
+      (encoder, decoder)
   | None ->
   let count_has_attr =
     parsed_fields |> List.filter (fun v -> v.has_attr_as) |> List.length
@@ -275,13 +302,7 @@ let generate_codecs ({ do_encode; do_decode } as generator_settings) row_fields
 
   let encoder =
     if do_encode then
-      Some
-        (List.map
-           (generate_encoder_case generator_settings unboxed has_attr_as)
-           parsed_fields
-        |> Exp.match_ [%expr v]
-        |> Exp.fun_ Asttypes.Nolabel None [%pat? v]
-        |> Utils.expr_func ~arity:1)
+      Some (generate_encoder generator_settings unboxed has_attr_as parsed_fields)
     else None
   in
 

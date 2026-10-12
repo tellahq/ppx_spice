@@ -16,6 +16,7 @@ import * as Serde_strict_test from "./spec/serde_strict_test.mjs";
 import * as Encode_decode_test from "./spec/encode_decode_test.mjs";
 import * as Raising_field_test from "./spec/raising_field_test.mjs";
 import * as Top_level_options_test from "./spec/top_level_options_test.mjs";
+import * as Serde_legacy_write_test from "./spec/serde_legacy_write_test.mjs";
 import * as Generic_type_params_test from "./spec/generic_type_params_test.mjs";
 import * as Optional_field_records_test from "./spec/optional_field_records_test.mjs";
 
@@ -55,10 +56,6 @@ let error = Serde_strict_test.error;
 
 let equal = Serde_as_test.equal;
 
-let testEqual = Serde_edge_test.testEqual;
-
-let json = Serde_edge_test.json;
-
 let errorAt = Serde_edge_test.errorAt;
 
 let roundTrips = Serde_edge_test.roundTrips;
@@ -76,6 +73,10 @@ let ext = Serde_random_test.ext;
 let tree = Serde_random_test.tree;
 
 let check = Serde_random_test.check;
+
+let testEqual = Serde_legacy_write_test.testEqual;
+
+let json = Serde_legacy_write_test.json;
 
 export {
   dataObject,
@@ -96,8 +97,6 @@ export {
   decoded,
   error,
   equal,
-  testEqual,
-  json,
   errorAt,
   roundTrips,
   seed,
@@ -107,5 +106,7 @@ export {
   ext,
   tree,
   check,
+  testEqual,
+  json,
 }
 /* Dicts_test Not a pure module */

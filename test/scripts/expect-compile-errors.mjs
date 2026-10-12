@@ -17,7 +17,7 @@ const fixtures = {
   "serde-unboxed": "@spice.serde can't be combined with @unboxed",
   "serde-as-number": "@spice.serde needs @as to be a string",
   "serde-as-conflict": "@as and @spice.as name the constructor differently",
-  "serde-legacy-payload": "@spice.serde takes no payload or {legacy: bool}",
+  "serde-legacy-payload": "@spice.serde takes no payload, {legacy: bool} or {legacyWrite: bool}",
   "serde-tag-key-clash": "A payload field is keyed like the tag type",
   "serde-tag-tuple-payload":
     "An internally tagged (@tag) @spice.serde constructor can't have several payload values",
