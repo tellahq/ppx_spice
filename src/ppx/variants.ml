@@ -327,17 +327,47 @@ let generate_legacy_decoder generator_settings constr_decls =
   |> fun cases ->
   cases @ [ default_case ] |> Exp.match_ [%expr Array.getUnsafe json_arr 0]
 
+let generate_encoder generator_settings unboxed has_attr_as parsed_decls =
+  let match_expr =
+    parsed_decls
+    |> List.map (generate_encoder_case generator_settings unboxed has_attr_as)
+    |> Exp.match_ [%expr v]
+  in
+  Exp.constraint_ match_expr Utils.ctyp_json_t
+  |> Exp.fun_ Asttypes.Nolabel None [%pat? v]
+  |> Utils.expr_func ~arity:1
+
+(* A constructor as the default spice encoding writes it: an array led by
+   the constructor's own name, which the legacy decoder reads back. *)
+let legacy_decl decl =
+  {
+    decl with
+    alias = Exp.constant (Pconst_string (decl.name, Location.none, None));
+    has_attr_as = false;
+  }
+
 let generate_codecs ({ do_encode; do_decode } as generator_settings)
     constr_decls unboxed =
   let parsed_decls = List.map (parse_decl generator_settings) constr_decls in
   match generator_settings.serde with
-  | Some { tag } ->
+  | Some { tag; legacy_write } ->
       if unboxed then
         fail (List.hd constr_decls).pcd_loc
           "@spice.serde can't be combined with @unboxed";
-      Serde.generate_codecs generator_settings ~tag
-        ~legacy:(fun () -> generate_legacy_decoder generator_settings constr_decls)
-        (List.map serde_case parsed_decls)
+      let encoder, decoder =
+        Serde.generate_codecs generator_settings ~tag
+          ~legacy:(fun () ->
+            generate_legacy_decoder generator_settings constr_decls)
+          (List.map serde_case parsed_decls)
+      in
+      let encoder =
+        if legacy_write && do_encode then
+          Some
+            (generate_encoder generator_settings false false
+               (List.map legacy_decl parsed_decls))
+        else encoder
+      in
+      (encoder, decoder)
   | None ->
   let count_has_attr =
     parsed_decls |> List.filter (fun v -> v.has_attr_as) |> List.length
@@ -352,16 +382,7 @@ let generate_codecs ({ do_encode; do_decode } as generator_settings)
 
   let encoder =
     if do_encode then
-      let match_expr =
-        parsed_decls
-        |> List.map
-             (generate_encoder_case generator_settings unboxed has_attr_as)
-        |> Exp.match_ [%expr v]
-      in
-      Some
-        (Exp.constraint_ match_expr Utils.ctyp_json_t
-        |> Exp.fun_ Asttypes.Nolabel None [%pat? v]
-        |> Utils.expr_func ~arity:1)
+      Some (generate_encoder generator_settings unboxed has_attr_as parsed_decls)
     else None
   in
 

@@ -16,3 +16,4 @@ include Serde_strict_test
 include Serde_as_test
 include Serde_edge_test
 include Serde_random_test
+include Serde_legacy_write_test

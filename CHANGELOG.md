@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.8.0
+
+- `@spice.serde({legacyWrite: true})`: decoders read the serde and the default spice encoding, encoders write the default spice encoding, so stored JSON can move to serde once every reader understands it.
+
 ## 0.7.0
 
 - Breaking: `@spice.serde` decoders read only the serde form. Add `@spice.serde({legacy: true})` to keep reading the default spice encoding (`["Variant", ...]`) and, with `@tag`, bare strings for constructors without payload.
