@@ -1,16 +1,16 @@
 // Mirrors test/rust-serde/src/main.rs; fixtures/serde-rust.json is what
 // Rust's serde derive writes for these types.
 
-@spice.serde
+@spice.serde({legacy: true})
 type size = [#S | #M | @spice.as("large") #L]
 
-@spice.serde
+@spice.serde({legacy: true})
 type poly = [#Left | #Right | #Payload(int) | #Pair(string, bool)]
 
 @spice
 type point = {x: int, y: int}
 
-@spice.serde
+@spice.serde({legacy: true})
 type rec ext =
   | Unit
   | @spice.as("renamed") Renamed
@@ -25,7 +25,7 @@ type rec ext =
   | Nested(ext)
   | Point(point)
 
-@spice.serde @tag("type")
+@spice.serde({legacy: true}) @tag("type")
 type int_ =
   | Regular
   | Overlap({cameraSize: size})
@@ -33,14 +33,14 @@ type int_ =
   | Point(point)
   | Map(dict<int>)
 
-@spice.serde @tag("kind")
+@spice.serde({legacy: true}) @tag("kind")
 type nested = SideBySide({position: poly, style: int_})
 
-@spice.serde @tag("type")
+@spice.serde({legacy: true}) @tag("type")
 type gen<'a> = G({value: 'a}) | E
 
-@spice.serde
+@spice.serde({legacy: true})
 type rec tree = Leaf | Node({left: tree, right: tree, value: int})
 
-@spice.serde @tag("type")
+@spice.serde({legacy: true}) @tag("type")
 type withNull = N({b: option<int>})

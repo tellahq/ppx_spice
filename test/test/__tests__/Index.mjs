@@ -11,6 +11,7 @@ import * as Serde_edge_test from "./spec/serde_edge_test.mjs";
 import * as Serde_rust_test from "./spec/serde_rust_test.mjs";
 import * as Polyvariants_test from "./spec/polyvariants_test.mjs";
 import * as Serde_random_test from "./spec/serde_random_test.mjs";
+import * as Serde_strict_test from "./spec/serde_strict_test.mjs";
 import * as Encode_decode_test from "./spec/encode_decode_test.mjs";
 import * as Raising_field_test from "./spec/raising_field_test.mjs";
 import * as Top_level_options_test from "./spec/top_level_options_test.mjs";
@@ -46,6 +47,10 @@ let isError = Serde_test.isError;
 let golden = Serde_rust_test.golden;
 
 let used = Serde_rust_test.used;
+
+let decoded = Serde_strict_test.decoded;
+
+let error = Serde_strict_test.error;
 
 let testEqual = Serde_edge_test.testEqual;
 
@@ -85,6 +90,8 @@ export {
   isError,
   golden,
   used,
+  decoded,
+  error,
   testEqual,
   json,
   errorAt,

@@ -48,102 +48,37 @@ function t_decode(v) {
     return Spice.error(undefined, "Not a variant", v);
   }
   if (Array.isArray(v)) {
-    if (v.length === 0) {
-      return Spice.error(undefined, "Expected variant, found empty array", v);
-    }
-    let match = v[0];
-    if (typeof match === "string") {
-      switch (match) {
-        case "A" :
-          if (v.length !== 1) {
-            return Spice.error(undefined, "Invalid number of arguments to variant constructor", v);
-          } else {
-            return {
-              TAG: "Ok",
-              _0: "A"
-            };
-          }
-        case "B" :
-          if (v.length !== 2) {
-            return Spice.error(undefined, "Invalid number of arguments to variant constructor", v);
-          }
-          let v$1 = v[1];
-          let v$2;
-          if (typeof v$1 === "object" && v$1 !== null && !Array.isArray(v$1)) {
-            let spice_field_x = Stdlib_Option.getOr(Stdlib_Option.map(v$1["x"], Spice.intFromJson), Spice.error(undefined, "x" + " missing", v$1));
-            if (spice_field_x.TAG === "Ok") {
-              v$2 = {
-                TAG: "Ok",
-                _0: {
-                  type: "B",
-                  x: spice_field_x._0
-                }
-              };
-            } else {
-              let e = spice_field_x._0;
-              v$2 = Spice.error("." + ("x" + e.path), e.message, e.value);
-            }
-          } else {
-            v$2 = Spice.error(undefined, "Not an object", v$1);
-          }
-          if (v$2.TAG === "Ok") {
-            return {
-              TAG: "Ok",
-              _0: v$2._0
-            };
-          }
-          let e$1 = v$2._0;
-          return {
-            TAG: "Error",
-            _0: {
-              path: "[1]" + e$1.path,
-              message: e$1.message,
-              value: e$1.value
-            }
-          };
-      }
-    }
-    return Spice.error(undefined, "Invalid variant constructor", v[0]);
+    return Spice.error(undefined, "Expected variant, found array", v);
   }
   switch (typeof v) {
-    case "string" :
-      if (v === "A") {
-        return {
-          TAG: "Ok",
-          _0: "A"
-        };
-      } else {
-        return Spice.error(undefined, "Invalid variant constructor", v);
-      }
-    case "boolean" :
-    case "number" :
-      return Spice.error(undefined, "Not a variant", v);
     case "object" :
-      let match$1 = v["type"];
-      if (typeof match$1 === "string") {
-        if (match$1 === "A") {
+      let match = v["type"];
+      if (typeof match === "string") {
+        if (match === "A") {
           return {
             TAG: "Ok",
             _0: "A"
           };
         }
-        if (match$1 !== "B") {
+        if (match !== "B") {
           return Spice.error(undefined, "Invalid variant constructor", v);
         }
-        let spice_field_x$1 = Stdlib_Option.getOr(Stdlib_Option.map(v["x"], Spice.intFromJson), Spice.error(undefined, "x" + " missing", v));
-        if (spice_field_x$1.TAG === "Ok") {
+        let spice_field_x = Stdlib_Option.getOr(Stdlib_Option.map(v["x"], Spice.intFromJson), Spice.error(undefined, "x" + " missing", v));
+        if (spice_field_x.TAG === "Ok") {
           return {
             TAG: "Ok",
             _0: {
               type: "B",
-              x: spice_field_x$1._0
+              x: spice_field_x._0
             }
           };
         }
-        let e$2 = spice_field_x$1._0;
-        return Spice.error("." + ("x" + e$2.path), e$2.message, e$2.value);
+        let e = spice_field_x._0;
+        return Spice.error("." + ("x" + e.path), e.message, e.value);
       }
       return Spice.error(undefined, "type" + " missing", v);
+    default:
+      return Spice.error(undefined, "Not a variant", v);
   }
 }
 
@@ -174,47 +109,7 @@ function p_decode(v) {
     return Spice.error(undefined, "Not a variant", v);
   }
   if (Array.isArray(v)) {
-    if (v.length === 0) {
-      return Spice.error(undefined, "Expected variant, found empty array", v);
-    }
-    let match = v[0];
-    if (typeof match === "string") {
-      switch (match) {
-        case "A" :
-          if (v.length !== 1) {
-            return Spice.error(undefined, "Invalid number of arguments to polyvariant constructor", v);
-          } else {
-            return {
-              TAG: "Ok",
-              _0: "A"
-            };
-          }
-        case "B" :
-          if (v.length !== 2) {
-            return Spice.error(undefined, "Invalid number of arguments to polyvariant constructor", v);
-          }
-          let v0 = Spice.intFromJson(v[1]);
-          if (v0.TAG === "Ok") {
-            return {
-              TAG: "Ok",
-              _0: {
-                NAME: "B",
-                VAL: v0._0
-              }
-            };
-          }
-          let e = v0._0;
-          return {
-            TAG: "Error",
-            _0: {
-              path: "[1]" + e.path,
-              message: e.message,
-              value: e.value
-            }
-          };
-      }
-    }
-    return Spice.error(undefined, "Invalid polymorphic variant constructor", v[0]);
+    return Spice.error(undefined, "Expected variant, found array", v);
   }
   switch (typeof v) {
     case "string" :
@@ -230,13 +125,13 @@ function p_decode(v) {
     case "number" :
       return Spice.error(undefined, "Not a variant", v);
     case "object" :
-      let match$1 = Object.entries(v);
-      if (match$1.length !== 1) {
+      let match = Object.entries(v);
+      if (match.length !== 1) {
         return Spice.error(undefined, "Expected an object with one key", v);
       }
-      let match$2 = match$1[0];
-      let payload = match$2[1];
-      let spice_tag = match$2[0];
+      let match$1 = match[0];
+      let payload = match$1[1];
+      let spice_tag = match$1[0];
       if (spice_tag === "A") {
         let v$1;
         v$1 = payload === null ? ({
@@ -249,30 +144,30 @@ function p_decode(v) {
             _0: v$1._0
           };
         }
-        let e$1 = v$1._0;
+        let e = v$1._0;
         return {
           TAG: "Error",
           _0: {
-            path: ".A" + e$1.path,
-            message: e$1.message,
-            value: e$1.value
+            path: ".A" + e.path,
+            message: e.message,
+            value: e.value
           }
         };
       }
       if (spice_tag !== "B") {
         return Spice.error(undefined, "Invalid variant constructor", v);
       }
-      let v0$1 = Spice.intFromJson(payload);
+      let v0 = Spice.intFromJson(payload);
       let v$2;
-      v$2 = v0$1.TAG === "Ok" ? ({
+      v$2 = v0.TAG === "Ok" ? ({
           TAG: "Ok",
           _0: {
             NAME: "B",
-            VAL: v0$1._0
+            VAL: v0._0
           }
         }) : ({
           TAG: "Error",
-          _0: v0$1._0
+          _0: v0._0
         });
       if (v$2.TAG === "Ok") {
         return {
@@ -280,13 +175,13 @@ function p_decode(v) {
           _0: v$2._0
         };
       }
-      let e$2 = v$2._0;
+      let e$1 = v$2._0;
       return {
         TAG: "Error",
         _0: {
-          path: ".B" + e$2.path,
-          message: e$2.message,
-          value: e$2.value
+          path: ".B" + e$1.path,
+          message: e$1.message,
+          value: e$1.value
         }
       };
   }

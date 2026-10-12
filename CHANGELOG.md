@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.7.0
+
+- Breaking: `@spice.serde` decoders read only the serde form. Add `@spice.serde({legacy: true})` to keep reading the default spice encoding (`["Variant", ...]`) and, with `@tag`, bare strings for constructors without payload.
+
 ## 0.6.0
 
 - `@spice.serde`: encode variants and polymorphic variants like Rust's serde derive, externally tagged by default and internally tagged with ReScript's `@tag("...")` (inline records, or one value that encodes to an object). Decoders also accept the default spice encoding, so previously stored JSON keeps decoding. See [Serde-compatible variants](docs/GUIDE.md#serde-compatible-variants). Its tests check the encoding against JSON written by Rust's serde (`test/rust-serde`).

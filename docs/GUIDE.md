@@ -141,7 +141,12 @@ Two constructors can't share a JSON name, and with `@tag` no payload field may b
 
 As in serde, decoders ignore keys they don't know, a constructor without payload also decodes from `{"Name": null}` (externally tagged), and an `option<option<_>>` payload loses `Some(None)`, which encodes as `null` like `None`.
 
-The decoders also accept the default spice encoding (`["Polygon", {"sides": 5}]`), so JSON written before a type switched to `@spice.serde` keeps decoding. Internally tagged decoders also accept a bare string for constructors without payload (`"Circle"`). Encoders only write the serde form.
+Decoders read only the serde form. `@spice.serde({legacy: true})` also lets them read the default spice encoding (`["Polygon", {"sides": 5}]`), so JSON written before a type switched to `@spice.serde` keeps decoding; with `@tag`, it also reads a bare string for a constructor without payload (`"Circle"`). Encoders only write the serde form.
+
+```rescript
+@spice.serde({legacy: true}) @tag("type")
+type shape = Circle | Polygon({sides: int})
+```
 
 ### Option and Null
 

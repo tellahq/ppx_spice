@@ -12,5 +12,6 @@ include Results_test
 include Raising_field_test
 include Serde_test
 include Serde_rust_test
+include Serde_strict_test
 include Serde_edge_test
 include Serde_random_test
