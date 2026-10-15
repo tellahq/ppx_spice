@@ -111,10 +111,14 @@ function shadow_decode(v) {
         };
       }
       if (spice_tag !== "DEEP") {
-        return {
-          TAG: "Ok",
-          _0: "NONE"
-        };
+        if (payload === null) {
+          return {
+            TAG: "Ok",
+            _0: "NONE"
+          };
+        } else {
+          return Spice.error("." + spice_tag, "Expected null", payload);
+        }
       }
       let v$3;
       v$3 = payload === null ? ({
@@ -852,10 +856,14 @@ function poly_decode(v) {
         };
       }
       if (spice_tag !== "left") {
-        return {
-          TAG: "Ok",
-          _0: "Unknown"
-        };
+        if (payload === null) {
+          return {
+            TAG: "Ok",
+            _0: "Unknown"
+          };
+        } else {
+          return Spice.error("." + spice_tag, "Expected null", payload);
+        }
       }
       let v$3;
       v$3 = payload === null ? ({
@@ -987,6 +995,304 @@ function recordWithFallback_decode(v) {
   }
 }
 
+function mixed_encode(v) {
+  if (typeof v !== "object") {
+    return "UnknownMixed";
+  } else if (v.TAG === "Circle") {
+    return Object.fromEntries([[
+        "Circle",
+        Spice.floatToJson(v._0)
+      ]]);
+  } else {
+    return Object.fromEntries([[
+        "Rect",
+        Object.fromEntries(Spice.filterOptional([[
+            "w",
+            Spice.floatToJson(v.w)
+          ]]))
+      ]]);
+  }
+}
+
+function mixed_encodeJson(v) {
+  if (typeof v !== "object") {
+    return "UnknownMixed";
+  } else if (v.TAG === "Circle") {
+    return Object.fromEntries([[
+        "Circle",
+        Spice.floatToJson(v._0)
+      ]]);
+  } else {
+    return Object.fromEntries([[
+        "Rect",
+        Object.fromEntries(Spice.filterOptional([[
+            "w",
+            Spice.floatToJson(v.w)
+          ]]))
+      ]]);
+  }
+}
+
+function mixed_decode(v) {
+  if (v === null) {
+    return Spice.error(undefined, "Not a variant", v);
+  }
+  if (Array.isArray(v)) {
+    return Spice.error(undefined, "Expected variant, found array", v);
+  }
+  switch (typeof v) {
+    case "string" :
+      if (v === "UnknownMixed" || v !== "Circle" && v !== "Rect") {
+        return {
+          TAG: "Ok",
+          _0: "UnknownMixed"
+        };
+      } else {
+        return Spice.error(undefined, "Invalid variant constructor", v);
+      }
+    case "boolean" :
+    case "number" :
+      return Spice.error(undefined, "Not a variant", v);
+    case "object" :
+      let match = Object.entries(v);
+      if (match.length !== 1) {
+        return Spice.error(undefined, "Expected an object with one key", v);
+      }
+      let match$1 = match[0];
+      let payload = match$1[1];
+      let spice_tag = match$1[0];
+      if (spice_tag === "Circle") {
+        let v0 = Spice.floatFromJson(payload);
+        let v$1;
+        v$1 = v0.TAG === "Ok" ? ({
+            TAG: "Ok",
+            _0: {
+              TAG: "Circle",
+              _0: v0._0
+            }
+          }) : ({
+            TAG: "Error",
+            _0: v0._0
+          });
+        if (v$1.TAG === "Ok") {
+          return {
+            TAG: "Ok",
+            _0: v$1._0
+          };
+        }
+        let e = v$1._0;
+        return {
+          TAG: "Error",
+          _0: {
+            path: ".Circle" + e.path,
+            message: e.message,
+            value: e.value
+          }
+        };
+      }
+      if (spice_tag === "Rect") {
+        let v$2;
+        if (typeof payload === "object" && payload !== null && !Array.isArray(payload)) {
+          let spice_field_w = Stdlib_Option.getOr(Stdlib_Option.map(payload["w"], Spice.floatFromJson), Spice.error(undefined, "w" + " missing", v));
+          if (spice_field_w.TAG === "Ok") {
+            v$2 = {
+              TAG: "Ok",
+              _0: {
+                TAG: "Rect",
+                w: spice_field_w._0
+              }
+            };
+          } else {
+            let e$1 = spice_field_w._0;
+            v$2 = Spice.error("." + ("w" + e$1.path), e$1.message, e$1.value);
+          }
+        } else {
+          v$2 = Spice.error(undefined, "Not an object", payload);
+        }
+        if (v$2.TAG === "Ok") {
+          return {
+            TAG: "Ok",
+            _0: v$2._0
+          };
+        }
+        let e$2 = v$2._0;
+        return {
+          TAG: "Error",
+          _0: {
+            path: ".Rect" + e$2.path,
+            message: e$2.message,
+            value: e$2.value
+          }
+        };
+      }
+      if (spice_tag !== "UnknownMixed") {
+        if (payload === null) {
+          return {
+            TAG: "Ok",
+            _0: "UnknownMixed"
+          };
+        } else {
+          return Spice.error("." + spice_tag, "Expected null", payload);
+        }
+      }
+      let v$3;
+      v$3 = payload === null ? ({
+          TAG: "Ok",
+          _0: "UnknownMixed"
+        }) : Spice.error(undefined, "Expected null", payload);
+      if (v$3.TAG === "Ok") {
+        return {
+          TAG: "Ok",
+          _0: v$3._0
+        };
+      }
+      let e$3 = v$3._0;
+      return {
+        TAG: "Error",
+        _0: {
+          path: ".UnknownMixed" + e$3.path,
+          message: e$3.message,
+          value: e$3.value
+        }
+      };
+  }
+}
+
+function legacyOther_encode(v) {
+  if (v === "Known") {
+    return "Known";
+  } else {
+    return "UnknownLegacy";
+  }
+}
+
+function legacyOther_encodeJson(v) {
+  if (v === "Known") {
+    return "Known";
+  } else {
+    return "UnknownLegacy";
+  }
+}
+
+function legacyOther_decode(v) {
+  if (v === null) {
+    return Spice.error(undefined, "Not a variant", v);
+  }
+  if (Array.isArray(v)) {
+    if (v.length === 0) {
+      return Spice.error(undefined, "Expected variant, found empty array", v);
+    }
+    let match = v[0];
+    if (typeof match === "string") {
+      switch (match) {
+        case "Known" :
+          if (v.length !== 1) {
+            return Spice.error(undefined, "Invalid number of arguments to variant constructor", v);
+          } else {
+            return {
+              TAG: "Ok",
+              _0: "Known"
+            };
+          }
+        case "UnknownLegacy" :
+          if (v.length !== 1) {
+            return Spice.error(undefined, "Invalid number of arguments to variant constructor", v);
+          } else {
+            return {
+              TAG: "Ok",
+              _0: "UnknownLegacy"
+            };
+          }
+      }
+    }
+    if (v.length !== 1) {
+      return Spice.error(undefined, "Invalid number of arguments to variant constructor", v);
+    } else {
+      return {
+        TAG: "Ok",
+        _0: "UnknownLegacy"
+      };
+    }
+  }
+  switch (typeof v) {
+    case "string" :
+      if (v === "Known") {
+        return {
+          TAG: "Ok",
+          _0: "Known"
+        };
+      } else {
+        return {
+          TAG: "Ok",
+          _0: "UnknownLegacy"
+        };
+      }
+    case "boolean" :
+    case "number" :
+      return Spice.error(undefined, "Not a variant", v);
+    case "object" :
+      let match$1 = Object.entries(v);
+      if (match$1.length !== 1) {
+        return Spice.error(undefined, "Expected an object with one key", v);
+      }
+      let match$2 = match$1[0];
+      let payload = match$2[1];
+      let spice_tag = match$2[0];
+      if (spice_tag === "Known") {
+        let v$1;
+        v$1 = payload === null ? ({
+            TAG: "Ok",
+            _0: "Known"
+          }) : Spice.error(undefined, "Expected null", payload);
+        if (v$1.TAG === "Ok") {
+          return {
+            TAG: "Ok",
+            _0: v$1._0
+          };
+        }
+        let e = v$1._0;
+        return {
+          TAG: "Error",
+          _0: {
+            path: ".Known" + e.path,
+            message: e.message,
+            value: e.value
+          }
+        };
+      }
+      if (spice_tag !== "UnknownLegacy") {
+        if (payload === null) {
+          return {
+            TAG: "Ok",
+            _0: "UnknownLegacy"
+          };
+        } else {
+          return Spice.error("." + spice_tag, "Expected null", payload);
+        }
+      }
+      let v$2;
+      v$2 = payload === null ? ({
+          TAG: "Ok",
+          _0: "UnknownLegacy"
+        }) : Spice.error(undefined, "Expected null", payload);
+      if (v$2.TAG === "Ok") {
+        return {
+          TAG: "Ok",
+          _0: v$2._0
+        };
+      }
+      let e$1 = v$2._0;
+      return {
+        TAG: "Error",
+        _0: {
+          path: ".UnknownLegacy" + e$1.path,
+          message: e$1.message,
+          value: e$1.value
+        }
+      };
+  }
+}
+
 export {
   shadow_encode,
   shadow_encodeJson,
@@ -1015,5 +1321,11 @@ export {
   recordWithFallback_encode,
   recordWithFallback_encodeJson,
   recordWithFallback_decode,
+  mixed_encode,
+  mixed_encodeJson,
+  mixed_decode,
+  legacyOther_encode,
+  legacyOther_encodeJson,
+  legacyOther_decode,
 }
 /* No side effect */

@@ -138,6 +138,42 @@ Zora.test("@spice.other, @spice.alias, @spice.untagged, @spice.fallback", t => {
     NAME: "Text",
     VAL: "a"
   }), JSON.parse(`"a"`));
+  testEqual(t, "other: unknown name keyed to null", SerdeExtras.mixed_decode(JSON.parse(`{"Square": null}`)), {
+    TAG: "Ok",
+    _0: "UnknownMixed"
+  });
+  testEqual(t, "other: unknown name keyed to a value fails, like serde", SerdeExtras.mixed_decode(JSON.parse(`{"Square": 5}`)), {
+    TAG: "Error",
+    _0: {
+      path: ".Square",
+      message: "Expected null",
+      value: JSON.parse(`5`)
+    }
+  });
+  testEqual(t, "other: a payload constructor's bare name fails, like serde", SerdeExtras.mixed_decode(JSON.parse(`"Rect"`)), {
+    TAG: "Error",
+    _0: {
+      path: "",
+      message: "Invalid variant constructor",
+      value: JSON.parse(`"Rect"`)
+    }
+  });
+  testEqual(t, "other: unknown bare name", SerdeExtras.mixed_decode(JSON.parse(`"Square"`)), {
+    TAG: "Ok",
+    _0: "UnknownMixed"
+  });
+  testEqual(t, "other: legacy unknown", SerdeExtras.legacyOther_decode(JSON.parse(`["Zzz"]`)), {
+    TAG: "Ok",
+    _0: "UnknownLegacy"
+  });
+  testEqual(t, "other: legacy unknown with arguments fails", SerdeExtras.legacyOther_decode(JSON.parse(`["Zzz", 1]`)), {
+    TAG: "Error",
+    _0: {
+      path: "",
+      message: "Invalid number of arguments to variant constructor",
+      value: JSON.parse(`["Zzz", 1]`)
+    }
+  });
 });
 
 export {

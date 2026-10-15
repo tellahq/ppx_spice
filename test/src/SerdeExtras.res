@@ -40,3 +40,15 @@ type polyText = [#Left | @spice.untagged #Text(string)]
 
 @spice @spice.fallback({r: 0, g: 0, b: 0})
 type recordWithFallback = color
+
+// @spice.other with constructors that have a payload, as serde reads them.
+@spice.serde
+type mixed =
+  | Circle(float)
+  | Rect({w: float})
+  | @spice.other UnknownMixed
+
+@spice.serde({legacy: true})
+type legacyOther =
+  | Known
+  | @spice.other UnknownLegacy

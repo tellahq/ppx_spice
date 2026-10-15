@@ -314,8 +314,9 @@ let generate_decoder generator_settings ~tag ~legacy cases =
   let string_decodes = Option.is_none tag || Option.is_some legacy in
   let untagged = List.filter (fun { untagged } -> untagged) cases in
   let cases = List.filter (fun { untagged } -> not untagged) cases in
+  let other = List.find_opt (fun { other } -> other) cases in
   let invalid =
-    match List.find_opt (fun { other } -> other) cases with
+    match other with
     | Some { construct } -> [%expr Ok [%e construct None]]
     | None -> [%expr Spice.error "Invalid variant constructor" v]
   in
@@ -325,6 +326,31 @@ let generate_decoder generator_settings ~tag ~legacy cases =
            match payload with
            | Unit -> Some (fun _ -> [%expr Ok [%e construct None]])
            | _ -> None)
+  in
+  (* As serde: a bare string naming a constructor with a payload is an
+     error, not the [@spice.other] constructor. *)
+  let names =
+    match other with
+    | None -> units
+    | Some _ ->
+        units
+        @ (cases
+          |> by_names (fun { payload } ->
+                 match payload with
+                 | Unit -> None
+                 | _ ->
+                     Some
+                       (fun _ -> [%expr Spice.error "Invalid variant constructor" v])))
+  in
+  (* As serde: an unknown name keyed to anything but null is an error. *)
+  let unknown_key =
+    match other with
+    | Some { construct } ->
+        [%expr
+          match payload with
+          | JSON.Null -> Ok [%e construct None]
+          | _ -> Spice.error ~path:("." ^ spice_tag) "Expected null" payload]
+    | None -> invalid
   in
   let object_decoder =
     match tag with
@@ -355,7 +381,7 @@ let generate_decoder generator_settings ~tag ~legacy cases =
         [%expr
           match Dict.toArray dict with
           | [| (spice_tag, payload) |] ->
-              [%e decode_by_name with_payload ~otherwise:invalid]
+              [%e decode_by_name with_payload ~otherwise:unknown_key]
           | _ -> Spice.error "Expected an object with one key" v]
     | Some tag ->
         let records =
@@ -390,7 +416,7 @@ let generate_decoder generator_settings ~tag ~legacy cases =
          [ [%expr
              function
              | JSON.String spice_tag ->
-                 [%e decode_by_name units ~otherwise:invalid]] ]
+                 [%e decode_by_name names ~otherwise:invalid]] ]
        else [])
     (* Before JSON.Object, which also matches arrays at runtime. *)
     @ (match legacy with

@@ -258,7 +258,12 @@ let generate_legacy_decoder generator_settings row_fields =
              row_fields
          with
         | Some { prf_desc = Rtag ({ txt }, _, _) } ->
-            [%expr Ok [%e Exp.variant txt None]]
+            (* A unit constructor: no arguments. *)
+            [%expr
+              if Array.length json_arr <> 1 then
+                Spice.error
+                  "Invalid number of arguments to polyvariant constructor" v
+              else Ok [%e Exp.variant txt None]]
         | _ ->
             [%expr
               Spice.error "Invalid polymorphic variant constructor"

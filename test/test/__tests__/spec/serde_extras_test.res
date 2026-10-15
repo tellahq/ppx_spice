@@ -71,4 +71,27 @@ zoraBlock("@spice.other, @spice.alias, @spice.untagged, @spice.fallback", t => {
   t->testEqual("poly untagged named", polyText_decode(json(`"Left"`)), Ok(#Left))
   t->testEqual("poly untagged fails", polyText_decode(json(`5`))->Result.isError, true)
   t->testEqual("poly untagged encode", polyText_encode(#Text("a")), json(`"a"`))
+
+  t->testEqual("other: unknown name keyed to null", mixed_decode(json(`{"Square": null}`)), Ok(UnknownMixed))
+  t->testEqual(
+    "other: unknown name keyed to a value fails, like serde",
+    mixed_decode(json(`{"Square": 5}`)),
+    Error({path: ".Square", message: "Expected null", value: json(`5`)}),
+  )
+  t->testEqual(
+    "other: a payload constructor's bare name fails, like serde",
+    mixed_decode(json(`"Rect"`)),
+    Error({path: "", message: "Invalid variant constructor", value: json(`"Rect"`)}),
+  )
+  t->testEqual("other: unknown bare name", mixed_decode(json(`"Square"`)), Ok(UnknownMixed))
+  t->testEqual("other: legacy unknown", legacyOther_decode(json(`["Zzz"]`)), Ok(UnknownLegacy))
+  t->testEqual(
+    "other: legacy unknown with arguments fails",
+    legacyOther_decode(json(`["Zzz", 1]`)),
+    Error({
+      path: "",
+      message: "Invalid number of arguments to variant constructor",
+      value: json(`["Zzz", 1]`),
+    }),
+  )
 })
